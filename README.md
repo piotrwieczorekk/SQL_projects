@@ -1,1 +1,1 @@
-glkadflgdfgdfgadfg
+This directory contains SQL projects.
