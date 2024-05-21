@@ -84,3 +84,49 @@ ORDER BY
 	TerritoryID, ProductID
 
 
+-- This time the goal was to picture average hourly salary by job title, gender and city.
+-- In order to do that, I created a view that would obtain information regarding current workers' salaries
+-- with help of window functions
+-- In the second query, previously created view was used in an inner join clause and the data was aggregated to show
+-- average hourly salary grouped by several variables
+
+CREATE VIEW[LastSalary] AS
+SELECT
+	t1.*
+FROM (
+SELECT
+	*,
+	FIRST_VALUE(Rate) OVER(PARTITION BY BusinessEntityID ORDER BY RateChangeDate DESC) AS LastRate,
+	ROW_NUMBER() OVER(PARTITION BY BusinessEntityID ORDER BY RateChangeDate DESC) AS RankRate
+FROM 
+	[HumanResources].[EmployeePayHistory] ) t1
+WHERE
+	t1.RankRate = 1
+
+
+SELECT * FROM LastSalary
+
+SELECT
+	t4.JobTitle,
+	t4.Gender,
+	t4.City,
+	AVG(SalaryHourlyRate) AS AvgSalaryHourlyRate
+FROM (
+SELECT
+	t1.BusinessEntityID,
+	t1.City,
+	t1.JobTitle,
+	t2.Gender,
+	t3.LastRate AS SalaryHourlyRate
+FROM 
+	[HumanResources].[vEmployee] t1
+INNER JOIN
+	[HumanResources].[Employee] t2
+ON
+	t1.BusinessEntityID = t2.BusinessEntityID
+INNER JOIN
+	[LastSalary] t3
+ON 
+	t1.BusinessEntityID = t3.BusinessEntityID) t4
+GROUP BY
+	t4.JobTitle, t4.City, t4.Gender
